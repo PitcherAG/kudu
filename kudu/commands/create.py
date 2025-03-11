@@ -25,8 +25,9 @@ from kudu.commands.push import get_file_data, update_file_metadata
     default="zip",
     help="Extension of the file that's going to be uploaded, default 'zip'",
 )
+@click.option("--skip_conversion", "-s", is_flag=True, default=False, required=False, help="Skip Conversion Engine")
 @click.pass_context
-def create(ctx, instance, body, filename=None, path=None, extension="zip"):
+def create(ctx, instance, body, filename=None, path=None, extension="zip",skip_conversion=False):
     base_name = (
         os.path.splitext(filename)[0]
         if filename
@@ -35,7 +36,7 @@ def create(ctx, instance, body, filename=None, path=None, extension="zip"):
 
     file_data = get_file_data(path, base_name, category=extension)
     file_id = create_file(
-        ctx.obj["token"], instance, body, extension, filename=filename
+        ctx.obj["token"], instance, body, extension, filename=filename, skip_conversion=skip_conversion
     )
     url = "/files/%d/upload-url/" % file_id
     response = request("get", url, token=ctx.obj["token"])
@@ -46,13 +47,14 @@ def create(ctx, instance, body, filename=None, path=None, extension="zip"):
     update_file_metadata(ctx, file_id)
 
 
-def create_file(token, app_id, file_body, category, filename=None):
+def create_file(token, app_id, file_body, category, filename=None, skip_conversion=False):
     payload = {
         "app": app_id,
         "body": file_body,
         "downloadUrl": "https://admin.pitcher.com/downloads/Pitcher%20HTML5%20Folder.zip",
         "category": category,
         "dont_convert": True,
+        "skip_conversion": skip_conversion,
     }
 
     if filename:
